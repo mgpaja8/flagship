@@ -12,19 +12,20 @@ import {
 
 import { get } from 'lodash-es';
 
+import { SearchBar } from '@brandingbrand/fscomponents';
+
 import PSScreenWrapper from '../components/PSScreenWrapper';
 import PSWelcome from '../components/PSWelcome';
 import PSHeroCarousel, {
   PSHeroCarouselItem
 } from '../components/PSHeroCarousel';
-import PSSearchBar from '../components/PSSearchBar';
 import PSButton from '../components/PSButton';
 import PSShopLandingCategories from '../components/PSShopLandingCategories';
 
 import { openSignInModal } from '../lib/shortcuts';
 import { handleDeeplink } from '../lib/deeplinkHandler';
 import GlobalStyle from '../styles/Global';
-import { border, palette } from '../styles/variables';
+import { border, color, palette } from '../styles/variables';
 import { navBarFullBleed } from '../styles/Navigation';
 import { NavigatorStyle, ScreenProps } from '../lib/commonTypes';
 import withAccount, { AccountProps } from '../providers/accountProvider';
@@ -32,9 +33,17 @@ import withTopCategory, { TopCategoryProps } from '../providers/topCategoryProvi
 import { dataSourceConfig } from '../lib/datasource';
 import translate, { translationKeys } from '../lib/translations';
 
-const logo = require('../../assets/images/placeholder-100x100.png');
+const arrow = require('../../assets/images/arrow.png');
+const logo = require('../../assets/images/pirateship-120.png');
+const searchIcon = require('../../assets/images/search.png');
 
 const ShopStyle = StyleSheet.create({
+  arrow: {
+    maxWidth: 15,
+    maxHeight: 15,
+    marginHorizontal: 10,
+    transform: [{ rotate: '180deg' }]
+  },
   wrapper: {
     backgroundColor: palette.primary
   },
@@ -53,13 +62,13 @@ const ShopStyle = StyleSheet.create({
     backgroundColor: palette.background
   },
   shopButtonsContainer: {
-    marginBottom: 20,
+    marginBottom: 15,
     marginHorizontal: 15
   },
   shopCategoryButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10
+    marginBottom: 0
   },
   searchBarContainer: {
     marginBottom: 10,
@@ -68,7 +77,10 @@ const ShopStyle = StyleSheet.create({
   },
   sectionTitle: {
     marginHorizontal: 15,
-    marginBottom: 15
+    marginTop: 0,
+    paddingTop: 15,
+    paddingBottom: 15,
+    justifyContent: 'center'
   },
   shopLandingCategories: {
     borderTopWidth: 1,
@@ -86,8 +98,14 @@ const ShopStyle = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between'
   },
+  viewAllButtonTitle: {
+    fontSize: 16,
+    color: color.black
+  },
   viewAllButton: {
-    marginRight: 15
+    flexDirection: 'row-reverse',
+    justifyContent: 'flex-start',
+    alignItems: 'center'
   }
 });
 
@@ -169,8 +187,11 @@ class Shop extends Component<ShopProps> {
   }
 
   handleCategoryItemPress = (item: any) => {
+    // Shopify doesn't have the concept of subcategories so always direct users to product index
+    const screen = dataSourceConfig.type === 'shopify' ? 'ProductIndex' : 'Category';
+
     this.props.navigator.push({
-      screen: 'Category',
+      screen,
       title: item.title,
       passProps: {
         categoryId: item.id,
@@ -202,7 +223,12 @@ class Shop extends Component<ShopProps> {
             onItemPress={this.handleHeroCarouselPress}
           />
           <View style={ShopStyle.searchBarContainer}>
-            <PSSearchBar />
+            <SearchBar
+              containerStyle={GlobalStyle.searchBarInner}
+              inputTextStyle={GlobalStyle.searchBarInputTextStyle}
+              searchIcon={searchIcon}
+              placeholder={translate.string(translationKeys.search.placeholder)}
+            />
             <TouchableOpacity
               style={StyleSheet.absoluteFill}
               onPress={this.showSearchScreen}
@@ -215,12 +241,17 @@ class Shop extends Component<ShopProps> {
 
           <View style={ShopStyle.topCategoriesContainer}>
             <Text style={[GlobalStyle.h2, ShopStyle.sectionTitle]}>
-              {translate.string(translationKeys.screens.shop.shopTopBtn)}
+              {translate.string(translationKeys.screens.shop.shopAllBtn)}
             </Text>
             <PSButton
               link
               title={translate.string(translationKeys.screens.shop.viewAllBtn)}
               onPress={this.goToAllCategories}
+              icon={arrow}
+              iconStyle={ShopStyle.arrow}
+              style={ShopStyle.container}
+              titleStyle={ShopStyle.viewAllButtonTitle}
+              viewStyle={ShopStyle.viewAllButton}
             />
           </View>
           <PSShopLandingCategories
@@ -238,7 +269,6 @@ class Shop extends Component<ShopProps> {
       <View style={ShopStyle.shopButtonsContainer}>
         <View style={ShopStyle.shopCategoryButtonsContainer}>
           <PSButton
-            primary
             style={ShopStyle.buttonCategoryLeft}
             title={translate.string(translationKeys.screens.shop.shopByCategoryBtn)}
             onPress={this.goToAllCategories}

@@ -5,10 +5,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "add-keys-android": "node node_modules/@brandingbrand/flagship/scripts/add-keys-android.js",
-    "add-keys-ios": "node node_modules/@brandingbrand/flagship/scripts/add-keys-ios.js",
+    "add-keys-android": "node ../../node_modules/@brandingbrand/flagship/dist/add-keys-android.js",
+    "add-keys-ios": "node ../../node_modules/@brandingbrand/flagship/dist/add-keys-ios-internal.js",
     "compile-android": "react-native run-android --no-packager",
     "compile-ios": "react-native run-ios --no-packager --simulator=\"iPhone X\"",
+    "build-ios": "./scripts/buildiOS.sh",
     "init": "flagship clean && flagship init",
     "prepare": "tsc",
     "start": "node node_modules/react-native/local-cli/cli.js start",
@@ -24,6 +25,7 @@
     "@brandingbrand/fscomponents": "^0.1.0",
     "@brandingbrand/fsengage": "^0.1.0",
     "@brandingbrand/fsi18n": "^0.1.0",
+    "@brandingbrand/fsmockdatasources": "^0.1.0",
     "@brandingbrand/fsnetwork": "^0.1.0",
     "@brandingbrand/fsproductdetail": "^0.1.0",
     "@brandingbrand/fsproductindex": "^0.1.0",
@@ -41,6 +43,7 @@
     "react-native-push-notification": "^3.0.2",
     "react-native-safe-area": "^0.4.1",
     "react-native-sensitive-info": "^5.1.0",
+    "react-native-svg": "^6.4.1",
     "react-native-touch-id": "^4.0.1",
     "react-redux": "^5.0.7",
     "tcomb-form-native": "^0.6.12"
@@ -56,7 +59,8 @@
       "@brandingbrand/fsproductdetail",
       "react-native-sensitive-info",
       "react-native-safe-area",
-      "react-native-push-notification"
+      "react-native-push-notification",
+      "react-native-svg"
     ],
     "webTitle": "PirateShip"
   },

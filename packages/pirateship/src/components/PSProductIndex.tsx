@@ -13,20 +13,16 @@ import { get } from 'lodash-es';
 import { Navigator } from 'react-native-navigation';
 
 import { CommerceTypes } from '@brandingbrand/fscommerce';
-import {
-  ProductIndex as PirateProductIndex,
-  ProductIndexSearch as PirateProductIndexSearch
-} from '@brandingbrand/fsproductindex';
+import { ProductIndex, ProductIndexSearch } from '@brandingbrand/fsproductindex';
 
 import { dataSource } from '../lib/datasource';
 import { backButton, searchButton } from '../lib/navStyles';
 import { navBarDefault } from '../styles/Navigation';
 import { NavButton, NavigatorStyle } from '../lib/commonTypes';
 
-import PSProductItem from '../components/PSProductItem';
 import PSFilterActionBar from '../components/PSFilterActionBar';
 
-import { FilterItem } from '@brandingbrand/fscomponents';
+import { FilterItem, ProductItem } from '@brandingbrand/fscomponents';
 import { border, color, fontSize, palette } from '../styles/variables';
 import translate, { translationKeys } from '../lib/translations';
 
@@ -166,19 +162,21 @@ export interface ProductIndexProps {
   keyword?: string;
   renderNoResult?: any;
   productQuery?: CommerceTypes.ProductQuery;
+  title?: string;
 }
 
 export interface ProductIndexState {
   isLoading: boolean;
+  isMultiColumn: boolean;
 }
 
 const renderProductIndex = (indexProps: any) => {
-  return <PirateProductIndex {...indexProps} />;
+  return <ProductIndex {...indexProps} />;
 };
 
 const renderSearch = (indexProps: any, keyword: string, renderNoResult: any) => {
   return (
-    <PirateProductIndexSearch {...indexProps} keyword={keyword} renderNoResult={renderNoResult} />
+    <ProductIndexSearch {...indexProps} keyword={keyword} renderNoResult={renderNoResult} />
   );
 };
 
@@ -195,7 +193,8 @@ class PSProductIndex extends Component<ProductIndexProps, ProductIndexState> {
     super(props);
 
     this.state = {
-      isLoading: false
+      isLoading: false,
+      isMultiColumn: false
     };
   }
 
@@ -204,8 +203,14 @@ class PSProductIndex extends Component<ProductIndexProps, ProductIndexState> {
     this.selectedSortingOption = data.selectedSortingOption;
     this.fullCategoryId = data.fullCategoryId;
 
-    if (data.title) {
-      this.props.navigator.setTitle({ title: data.title });
+    let newTitle = data.title || this.props.title;
+
+    if (newTitle) {
+      if (data.total) {
+        newTitle += ' (' + data.total + ')';
+      }
+
+      this.props.navigator.setTitle({ title: newTitle });
     }
   }
 
@@ -235,10 +240,9 @@ class PSProductIndex extends Component<ProductIndexProps, ProductIndexState> {
       const image = (item.images || []).find(img => !!img.uri);
 
       return (
-        <PSProductItem
-          navigator={this.props.navigator}
-          format={'horizontalList'}
+        <ProductItem
           image={image}
+          buttonProps={{palette}}
           reviewValue={get(item, 'review.statistics.averageRating')}
           reviewCount={get(item, 'review.statistics.reviewCount')}
           onPress={this.onPress(item)}
@@ -256,6 +260,8 @@ class PSProductIndex extends Component<ProductIndexProps, ProductIndexState> {
         showSortModal={showSortModal}
         commerceData={commerceData}
         keyword={this.props.keyword}
+        handleColumnToggle={this.toggleColumnLayout}
+        isMultiColumn={this.state.isMultiColumn}
       />
     );
   }
@@ -267,12 +273,8 @@ class PSProductIndex extends Component<ProductIndexProps, ProductIndexState> {
 
     const { keyword, renderNoResult } = this.props;
 
-    const formatProps: any = {
-      format: 'list'
-    };
-
     const indexProps: any = {
-      ...formatProps,
+      columns: this.state.isMultiColumn ? 2 : 1,
       listStyle: PIPStyle.container,
       renderRefineActionBar: this.renderRefineActionBar,
       commerceDataSource: dataSource,
@@ -304,6 +306,16 @@ class PSProductIndex extends Component<ProductIndexProps, ProductIndexState> {
           ? renderSearch(indexProps, keyword, renderNoResult)
           : renderProductIndex(indexProps)}
       </View>
+    );
+  }
+
+  toggleColumnLayout = (): void => {
+    this.setState(
+      (prevState: Readonly<ProductIndexState>): Pick<ProductIndexState, 'isMultiColumn'> => {
+        return {
+          isMultiColumn: !prevState.isMultiColumn
+        };
+      }
     );
   }
 

@@ -10,6 +10,7 @@ import { cloneDeep, find, findIndex } from 'lodash-es';
 import { Navigator } from 'react-native-navigation';
 
 import {
+  Loading,
   ReviewIndicator,
   ShareButton,
   Swatches,
@@ -25,7 +26,6 @@ import withCart, { CartProps } from '../providers/cartProvider';
 import { RecentlyViewedProps } from '../providers/recentlyViewedProvider';
 
 import PSButton from './PSButton';
-import PSLoading from './PSLoading';
 import PSProductCarousel from './PSProductCarousel';
 import PSStepper from './PSStepper';
 import PSHTMLView from './PSHTMLView';
@@ -210,6 +210,14 @@ const styles = StyleSheet.create({
   atcImage: {
     height: 15,
     width: 15
+  },
+  quantityText: {
+    fontWeight: '600',
+    fontSize: 15,
+    paddingBottom: 6
+  },
+  quantityView: {
+    marginTop: 15
   }
 });
 
@@ -312,7 +320,7 @@ class PSProductDetailComponent extends Component<
     }
   }
 
-  updateOption = (name: string, value: string) => {
+  updateOption = (name: string) => (value: string) => {
     if (this.props.commerceData) {
       const { variants } = this.props.commerceData;
       const { optionValues } = this.state;
@@ -329,7 +337,11 @@ class PSProductDetailComponent extends Component<
       // Search for matching variant
       const variant = find(variants, { optionValues: newOptionValues }) as any;
 
-      if (variant && variant.id && dataSourceConfig.type === 'commercecloud') {
+      if (
+        variant &&
+        variant.id &&
+        ['commercecloud', 'mock'].indexOf(dataSourceConfig.type) !== -1
+      ) {
         this.props.navigator.push({
           screen: 'ProductDetail',
           passProps: {
@@ -470,6 +482,34 @@ class PSProductDetailComponent extends Component<
     return <ShareButton content={content} />;
   }
 
+  renderSwatches = (options: CommerceTypes.Option[]): React.ReactNode => {
+    const { optionValues } = this.state;
+
+    return (
+      <View>
+        {options.map((option, index) => {
+          const defaultOption = find(optionValues, { name: option.id });
+
+          if (Array.isArray(option.values)
+              && option.values.length === 1
+              && option.values[0].name === 'Default Title') {
+            return null;
+          }
+
+          return (
+            <Swatches
+              key={index}
+              title={option.name}
+              items={option.values}
+              defaultValue={defaultOption ? defaultOption.value : undefined}
+              onChangeSwatch={this.updateOption(option.id)}
+            />
+          );
+        })}
+      </View>
+    );
+  }
+
   // tslint:disable cyclomatic-complexity
   render(): JSX.Element {
     // TODO: Remove type assertion when we update this to match the commerce schema
@@ -477,7 +517,7 @@ class PSProductDetailComponent extends Component<
     const commerceData = this.props.commerceData as CommerceTypes.Product & { [key: string]: any };
 
     if (!commerceData) {
-      return <PSLoading style={{ marginTop: 80 }} />;
+      return <Loading style={{ marginTop: 80 }} />;
     }
 
     this.trackImpression();
@@ -494,7 +534,6 @@ class PSProductDetailComponent extends Component<
       description = '',
       images = []
     } = commerceData;
-    const { optionValues } = this.state;
 
     // Update Image src (should be updated in ZoomCarousel component)
     const imagesSources = images.map((image: any) => {
@@ -568,26 +607,11 @@ class PSProductDetailComponent extends Component<
           </View>
         </View>
         <View style={styles.edgePadding}>
-          {options && (
-            <View>
-              {options.map((option, index) => {
-                const defaultOption = find(optionValues, { name: option.id });
-                return (
-                  <Swatches
-                    key={index}
-                    title={option.name}
-                    items={option.values}
-                    defaultValue={defaultOption ? defaultOption.value : undefined}
-                    onChangeSwatch={this.updateOption.bind(this, option.id)}
-                  />
-                );
-              })}
-            </View>
-          )}
-          <View>
+          {options && this.renderSwatches(options)}
+          <View style={styles.quantityView}>
             <View style={{ paddingBottom: 20 }}>
               <Text
-                style={{ fontWeight: '600', fontSize: 15, paddingBottom: 6 }}
+                style={styles.quantityText}
               >
                 {translate.string(translationKeys.item.qty)}:
               </Text>
